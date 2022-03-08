@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using KodeLabUsers.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace KodeLabUsers.Persistence
@@ -14,7 +15,8 @@ namespace KodeLabUsers.Persistence
         {
             ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
         }
-
+        public DbSet<UserDetails> Details { get; set; }
+        public DbSet<Address> Addresses { get; set; }
         public async Task<int> SaveChangesAsync()
         {
             return await base.SaveChangesAsync();
@@ -28,7 +30,7 @@ namespace KodeLabUsers.Persistence
         {
             if (!optionsBuilder.IsConfigured)
                 optionsBuilder
-                    .UseSqlServer("DataSource=app.db");
+                    .UseSqlServer("Data Source=(localdb)\\MSSQLLocalDB; Initial Catalog=UserStorageDB");
         }
     }
 }

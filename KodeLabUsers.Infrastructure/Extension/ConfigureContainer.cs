@@ -24,33 +24,14 @@ namespace KodeLabUsers.Infrastructure.Extension
 
             app.UseSwaggerUI(setupAction =>
             {
-                setupAction.SwaggerEndpoint("/swagger/OpenAPISpecification/swagger.json", "Onion Architecture API");
-                setupAction.RoutePrefix = "OpenAPI";
+                setupAction.SwaggerEndpoint("/swagger/KodeLabUsers/swagger.json", "User Results API");
+                setupAction.RoutePrefix = "KodeLabUsers";
             });
         }
 
         public static void ConfigureSwagger(this ILoggerFactory loggerFactory)
         {
-            loggerFactory.AddSerilog();
-        }
-
-        public static void UseHealthCheck(this IApplicationBuilder app)
-        {
-            app.UseHealthChecks("/healthz", new HealthCheckOptions
-            {
-                Predicate = _ => true,
-                ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse,
-                ResultStatusCodes =
-                {
-                    [HealthStatus.Healthy] = StatusCodes.Status200OK,
-                    [HealthStatus.Degraded] = StatusCodes.Status500InternalServerError,
-                    [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable
-                }
-            }).UseHealthChecksUI(setup =>
-            {
-                setup.ApiPath = "/healthcheck";
-                setup.UIPath = "/healthcheck-ui";
-            });
+           
         }
     }
 }

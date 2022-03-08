@@ -47,7 +47,7 @@ namespace KodeLabUsers
             services.AddAutoMapper();
 
             services.AddScopedServices();
-
+            //This will implement the interfaces that will be required in the REST services
             services.AddTransientServices();
 
             services.AddSwaggerOpenAPI();
@@ -62,7 +62,10 @@ namespace KodeLabUsers
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory log)
         {
-            if (env.IsDevelopment()) app.UseDeveloperExceptionPage();
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
 
             app.UseCors(options =>
                 options.WithOrigins("http://localhost:3000")
@@ -70,21 +73,23 @@ namespace KodeLabUsers
                     .AllowAnyMethod());
 
             app.ConfigureCustomExceptionMiddleware();
-
-            log.AddSerilog();
-
-            //app.ConfigureHealthCheck();
-
-
             app.UseRouting();
 
             app.UseAuthentication();
 
             app.UseAuthorization();
             app.ConfigureSwagger();
-           
+            app.UseCors(cors => cors
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .SetIsOriginAllowed(origin => true)
+                .AllowCredentials()
+            );
 
-            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
         }
     }
 }

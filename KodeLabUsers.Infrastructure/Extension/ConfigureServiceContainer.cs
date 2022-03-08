@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using AutoMapper;
 using KodeLabUsers.Domain.Settings;
 using KodeLabUsers.Persistence;
+using KodeLabUsers.Service.Contract;
+using KodeLabUsers.Service.Implementation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -18,9 +21,9 @@ namespace KodeLabUsers.Infrastructure.Extension
             IConfiguration configuration, IConfigurationRoot configRoot)
         {
             serviceCollection.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("OnionArchConn") ??
-                                     configRoot["ConnectionStrings:OnionArchConn"]
+                options.UseSqlServer(configuration.GetConnectionString("UserStorageDB") ?? configRoot["ConnectionStrings:InMemoryDb"]
                     , b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+
         }
 
         public static void AddAutoMapper(this IServiceCollection serviceCollection)
@@ -30,11 +33,15 @@ namespace KodeLabUsers.Infrastructure.Extension
         public static void AddScopedServices(this IServiceCollection serviceCollection)
         {
             serviceCollection.AddScoped<IApplicationDbContext>(provider => provider.GetService<ApplicationDbContext>());
+            serviceCollection.AddScoped(typeof(IGenericRepo<>), typeof(GenericRepo<>));
         }
 
         public static void AddTransientServices(this IServiceCollection serviceCollection)
         {
-           
+            serviceCollection.AddScoped(typeof(IGenericRepo<>), typeof(GenericRepo<>));
+            serviceCollection.AddTransient<IUserDetailsService, UserDetailsService>();
+            serviceCollection.AddTransient<IAddressService, AddressService>();
+
         }
 
 
@@ -43,55 +50,25 @@ namespace KodeLabUsers.Infrastructure.Extension
             serviceCollection.AddSwaggerGen(setupAction =>
             {
                 setupAction.SwaggerDoc(
-                    "OpenAPISpecification",
-                    new OpenApiInfo
+                    "KodeLabUsers",
+                    new OpenApiInfo()
                     {
-                        Title = "Onion Architecture WebAPI",
+                        Title = "User Results WebAPI",
                         Version = "1",
-                        Description = "Through this API you can access customer details",
-                        Contact = new OpenApiContact
+                        Description = "Through this API you can access user details",
+                        Contact = new OpenApiContact()
                         {
-                            Email = "amit.naik8103@gmail.com",
-                            Name = "Amit Naik",
-                            Url = new Uri("https://amitpnk.github.io/")
-                        },
-                        License = new OpenApiLicense
-                        {
-                            Name = "MIT License",
-                            Url = new Uri("https://opensource.org/licenses/MIT")
+                            Email = "marcellvannniekerk@gmail.com",
+                            Name = "Marcell van Niekerk",
+                            Url = new Uri("https://github.com/Marcell0805")
                         }
                     });
-
-                setupAction.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-                {
-                    Type = SecuritySchemeType.Http,
-                    Scheme = "bearer",
-                    BearerFormat = "JWT",
-                    Description = "Input your Bearer token in this format - Bearer token to access this API"
-                });
-                setupAction.AddSecurityRequirement(new OpenApiSecurityRequirement
-                {
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                            }
-                        },
-                        new List<string>()
-                    }
-                });
+                var filePath = Path.Combine(AppContext.BaseDirectory, "KodeLabUsers.Infrastructure.xml");
+                setupAction.IncludeXmlComments(filePath, includeControllerXmlComments: true);
             });
         }
 
-        public static void AddMailSetting(this IServiceCollection serviceCollection,
-            IConfiguration configuration)
-        {
-            serviceCollection.Configure<MailSettings>(configuration.GetSection("MailSettings"));
-        }
-
+       
         public static void AddController(this IServiceCollection serviceCollection)
         {
             serviceCollection.AddControllers().AddNewtonsoftJson();
@@ -105,21 +82,6 @@ namespace KodeLabUsers.Infrastructure.Extension
                 config.AssumeDefaultVersionWhenUnspecified = true;
                 config.ReportApiVersions = true;
             });
-        }
-
-        public static void AddHealthCheck(this IServiceCollection serviceCollection, AppSettings appSettings,
-            IConfiguration configuration)
-        {
-            serviceCollection.AddHealthChecks()
-                .AddDbContextCheck<ApplicationDbContext>("Application DB Context", HealthStatus.Degraded)
-                .AddUrlGroup(new Uri(appSettings.ApplicationDetail.ContactWebsite), "My personal website",
-                    HealthStatus.Degraded)
-                .AddSqlServer(configuration.GetConnectionString("OnionArchConn"));
-
-            serviceCollection.AddHealthChecksUI(setup =>
-            {
-                setup.AddHealthCheckEndpoint("Basic Health Check", "/healthz");
-            }).AddInMemoryStorage();
         }
     }
 }
