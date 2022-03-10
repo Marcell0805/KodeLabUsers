@@ -25,7 +25,7 @@ namespace KodeLabUsers.Infrastructure.Extension
                     , b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
 
         }
-
+        
         public static void AddAutoMapper(this IServiceCollection serviceCollection)
         {
         }
@@ -63,8 +63,15 @@ namespace KodeLabUsers.Infrastructure.Extension
                             Url = new Uri("https://github.com/Marcell0805")
                         }
                     });
-                var filePath = Path.Combine(AppContext.BaseDirectory, "KodeLabUsers.Infrastructure.xml");
-                setupAction.IncludeXmlComments(filePath, includeControllerXmlComments: true);
+                try
+                {
+                    var filePath = Path.Combine(AppContext.BaseDirectory, "KodeLabUsers.Infrastructure.xml");
+                    setupAction.IncludeXmlComments(filePath, includeControllerXmlComments: true);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
             });
         }
 

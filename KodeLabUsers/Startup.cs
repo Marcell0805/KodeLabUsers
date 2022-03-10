@@ -1,12 +1,17 @@
+using System;
 using System.IO;
 using HealthChecks.UI.Client;
 using KodeLabUsers.Domain.Settings;
 using KodeLabUsers.Infrastructure.Extension;
+using KodeLabUsers.Persistence;
 using KodeLabUsers.Service;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -44,6 +49,8 @@ namespace KodeLabUsers
 
             services.AddDbContext(Configuration, configRoot);
 
+            
+
             services.AddAutoMapper();
 
             services.AddScopedServices();
@@ -57,11 +64,20 @@ namespace KodeLabUsers
             services.AddVersion();
 
             services.AddFeatureManagement();
+            
         }
-
+        public static bool CheckDb()
+        {
+            ApplicationDbContext dbContext = new ApplicationDbContext();
+            return dbContext.Database.CanConnect();
+        }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory log)
         {
+            if (!CheckDb())
+            {
+                UpdateDatabase(app);
+            }
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -91,5 +107,22 @@ namespace KodeLabUsers
                 endpoints.MapControllers();
             });
         }
+        private static void UpdateDatabase(IApplicationBuilder app)
+        {
+            using var serviceScope = app.ApplicationServices
+                .GetRequiredService<IServiceScopeFactory>()
+                .CreateScope();
+            using var context = serviceScope.ServiceProvider.GetService<ApplicationDbContext>();
+            try
+            {
+                context.Database.Migrate();
+            }
+            catch (Exception)
+            {
+
+
+            }
+        }
+        
     }
 }
